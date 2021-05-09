@@ -36,5 +36,5 @@ publish: convert-rst
 	twine upload dist/*
 test:
 	pwd && \
-	python -m pytest --capture=no
+	python -m pytest specs/test_distracting_control.py --capture=no
 
