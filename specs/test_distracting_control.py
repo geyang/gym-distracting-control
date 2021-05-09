@@ -1,4 +1,5 @@
 import gym
+from cmx import CommonMark
 
 
 def test_max_episode_steps():
@@ -15,6 +16,8 @@ def test_flat_obs():
 def test_frame_skip():
     env = gym.make('distracting_control:Walker-walk-easy-v1', from_pixels=True, frame_skip=8)
     assert env._max_episode_steps == 125
+    # default channel goes first
+    assert env.reset().shape == (3, 84, 84)
 
 
 def test_channel_first():
@@ -36,3 +39,30 @@ def test_gray_scale():
     :return:
     """
     pass
+
+
+def test_all_envs():
+    from tqdm import tqdm
+
+    doc = CommonMark('README.md')
+    with doc:
+        from dm_control.suite import ALL_TASKS
+        doc.print(ALL_TASKS)
+
+    with doc:
+
+        for domain, task in tqdm(ALL_TASKS):
+            doc @ f"""
+            ## `{domain.capitalize()}-{task}`
+            """
+            r = doc.table().figure_row()
+            for difficulty in ['easy', 'medium', 'hard']:
+                env = gym.make(f'gdc:{domain.capitalize()}-{task}-{difficulty}-v1', from_pixels=True,
+                               channels_first=False)
+                env.seed(100)
+                try:
+                    img = env.reset()
+                    r.figure(img, src=f"figures/{domain}-{task}-{difficulty}.png", title=difficulty)
+                except:
+                    doc.print(domain, task, difficulty, f'is not supported.')
+                    pass
