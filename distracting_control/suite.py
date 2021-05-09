@@ -21,11 +21,15 @@ targeted for loading environments directly with similar configurations as those
 used in the original paper. Each distraction wrapper can be used independently
 though.
 """
+import os
+
 try:
     from dm_control import suite  # pylint: disable=g-import-not-at-top
     from dm_control.suite.wrappers import pixels  # pylint: disable=g-import-not-at-top
 except ImportError:
     suite = None
+
+BG_DATA_PATH = f"{os.environ['HOME']}/datasets/DAVIS/JPEGImages/480p"
 
 from distracting_control import background
 from distracting_control import camera
@@ -50,6 +54,7 @@ def load(domain_name,
          environment_kwargs=None,
          visualize_reward=False,
          render_kwargs=None,
+         from_pixels=True,
          pixels_only=True,
          pixels_observation_key="pixels"):
     """Returns an environment from a domain name, task name and optional settings.
@@ -69,7 +74,7 @@ def load(domain_name,
       task_kwargs: Optional `dict` of keyword arguments for the task.
       difficulty: Difficulty for the suite. One of 'easy', 'medium', 'hard'.
       dynamic: Boolean controlling whether distractions are dynamic or static.
-      backgound_dataset_path: String to the davis directory that contains the
+      background_dataset_path: String to the davis directory that contains the
         video directories.
       background_dataset_videos: String ('train'/'val') or list of strings of the
         DAVIS videos to be used for backgrounds.
@@ -82,6 +87,7 @@ def load(domain_name,
       visualize_reward: Optional `bool`. If `True`, object colours in rendered
         frames are set to indicate the reward at each step. Default `False`.
       render_kwargs: Dict, render kwargs for pixel wrapper.
+      from_pixels: Bool, flag to turn off pixel rendering
       pixels_only: Boolean controlling the exclusion of states in the observation.
       pixels_observation_key: Key in the observation used for the rendered image.
 
@@ -89,9 +95,8 @@ def load(domain_name,
       The requested environment.
     """
     if not is_available():
-        raise ImportError("dm_control module is not available. Make sure you "
-                          "follow the installation instructions from the "
-                          "dm_control package.")
+        raise ImportError("dm_control module is not available. Make sure you follow the "
+                          "installation instructions from the dm_control package.")
 
     if difficulty not in [None, "easy", "medium", "hard"]:
         raise ValueError("Difficulty should be one of: 'easy', 'medium', 'hard'.")
@@ -100,17 +105,12 @@ def load(domain_name,
     if "camera_id" not in render_kwargs:
         render_kwargs["camera_id"] = 2 if domain_name == "quadruped" else 0
 
-    env = suite.load(
-        domain_name,
-        task_name,
-        task_kwargs=task_kwargs,
-        environment_kwargs=environment_kwargs,
-        visualize_reward=visualize_reward)
+    env = suite.load(domain_name, task_name, task_kwargs=task_kwargs, environment_kwargs=environment_kwargs,
+                     visualize_reward=visualize_reward)
 
     # Apply background distractions.
     if difficulty or background_kwargs:
-        background_dataset_path = (
-                background_dataset_path or suite_utils.DEFAULT_BACKGROUND_PATH)
+        background_dataset_path = (background_dataset_path or BG_DATA_PATH)
         final_background_kwargs = dict()
         if difficulty:
             # Get kwargs for the given difficulty.
@@ -136,8 +136,7 @@ def load(domain_name,
         if difficulty:
             # Get kwargs for the given difficulty.
             scale = suite_utils.DIFFICULTY_SCALE[difficulty]
-            final_camera_kwargs.update(
-                suite_utils.get_camera_kwargs(domain_name, scale, dynamic))
+            final_camera_kwargs.update(suite_utils.get_camera_kwargs(domain_name, scale, dynamic))
         if camera_kwargs:
             # Overwrite kwargs with those passed here.
             final_camera_kwargs.update(camera_kwargs)
@@ -155,13 +154,12 @@ def load(domain_name,
             final_color_kwargs.update(color_kwargs)
         env = color.DistractingColorEnv(env, **final_color_kwargs)
 
-    # Apply Pixel wrapper after distractions. This is needed to ensure the
-    # changes from the distraction wrapper are applied to the MuJoCo environment
-    # before the rendering occurs.
-    env = pixels.Wrapper(
-        env,
-        pixels_only=pixels_only,
-        render_kwargs=render_kwargs,
-        observation_key=pixels_observation_key)
+    # note: allow state space only if from_pixels is False
+    if from_pixels:
+        # Note: Apply Pixel wrapper after distractions. This is needed to ensure the
+        #   changes from the distraction wrapper are applied to the MuJoCo environment
+        #   before the rendering occurs.
+        env = pixels.Wrapper(env, pixels_only=pixels_only, render_kwargs=render_kwargs,
+                             observation_key=pixels_observation_key)
 
     return env

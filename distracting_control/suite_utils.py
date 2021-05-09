@@ -22,10 +22,10 @@ used in the original paper. Each distraction wrapper can be used independently
 though.
 """
 import numpy as np
+import os
 
 DIFFICULTY_SCALE = dict(easy=0.1, medium=0.2, hard=0.3)
 DIFFICULTY_NUM_VIDEOS = dict(easy=4, medium=8, hard=None)
-DEFAULT_BACKGROUND_PATH = "$HOME/davis/"
 
 
 def get_color_kwargs(scale, dynamic):
@@ -35,8 +35,7 @@ def get_color_kwargs(scale, dynamic):
 
 
 def get_camera_kwargs(domain_name, scale, dynamic):
-    assert domain_name in ['reacher', 'cartpole', 'finger', 'cheetah',
-                           'ball_in_cup', 'walker']
+    assert domain_name in ['reacher', 'cartpole', 'finger', 'cheetah', 'ball_in_cup', 'walker']
     assert scale >= 0.0
     assert scale <= 1.0
     return dict(
@@ -61,8 +60,7 @@ def get_background_kwargs(domain_name,
                           dataset_videos=None,
                           shuffle=False,
                           video_alpha=1.0):
-    assert domain_name in ['reacher', 'cartpole', 'finger', 'cheetah',
-                           'ball_in_cup', 'walker']
+    assert domain_name in ['reacher', 'cartpole', 'finger', 'cheetah', 'ball_in_cup', 'walker']
     if domain_name == 'reacher':
         ground_plane_alpha = 0.0
     elif domain_name in ['walker', 'cheetah']:

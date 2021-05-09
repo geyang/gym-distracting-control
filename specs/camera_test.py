@@ -21,7 +21,7 @@ from __future__ import print_function
 
 import numpy as np
 from absl.testing import absltest
-from distracting_control import camera
+from dcs import camera
 from dm_control import suite as dm_control_suite
 from dm_control.suite import cartpole
 from dm_control.suite.wrappers import pixels

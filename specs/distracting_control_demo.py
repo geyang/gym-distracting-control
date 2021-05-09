@@ -29,7 +29,7 @@ flags.DEFINE_string(
     'davis_path',
     '',
     'Path to DAVIS images, used for background distractions.')
-flags.DEFINE_string('output_dir', '/tmp/distracting_control_demo',
+flags.DEFINE_string('output_dir', '/tmp/gym_dc_demo',
                     'Directory where the results are being saved.')
 
 
