@@ -7,6 +7,8 @@ This is a packaged version of the `distracting_control` suite from *Stone et al*
 ```bash
 pip install distracting_control
 ```
+You also need to download [the DAVIS 2017 dataset](https://davischallenge.org/davis2017/code.html). Make sure to select the 2017 TrainVal - Images and Annotations (480p). The training images will be used as distracting backgrounds.
+The dataset is assumed to be at `$HOME/datasets/DAVIS`.
 
 Then in your python script:
 

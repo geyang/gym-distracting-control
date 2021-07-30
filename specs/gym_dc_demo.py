@@ -17,10 +17,10 @@ if __name__ == '__main__':
             ('reacher', 'easy'),
             ('walker', 'walk')
         ]:
-            env = gym.make(f'distracting_control:{domain.capitalize()}-{task}-v1', difficulty=difficulty)
+            env = gym.make(f'distracting_control:{domain.capitalize()}-{task}-{difficulty}-v1', from_pixels=True)
 
             obs = env.reset()
             act = env.action_space.sample()
             obs, reward, done, info = env.step(act)
 
-            logger.save_image(obs['pixels'], f"figures/{domain}-{task}-({difficulty}).png")
+            logger.save_image(obs, f"figures/{domain}-{task}-({difficulty}).png")
