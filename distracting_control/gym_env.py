@@ -190,12 +190,13 @@ class DistractingEnv(gym.Env):
 
     def step(self, action):
         reward = 0
-
+        discount = 1
         for i in range(self.frame_skip):
             ts = self.env.step(action)
             if self.non_newtonian:  # zero velocity if non newtonian
                 self.env.physics.data.qvel[:] = 0
             reward += ts.reward or 0
+            discount *= ts.discount
             done = ts.last()
             if done:
                 break
