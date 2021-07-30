@@ -129,6 +129,35 @@ class DistractingEnv(gym.Env):
                          'video.frames_per_second': round(1.0 / self.env.control_timestep())}
 
         self.observation_space = convert_dm_control_to_gym_space(self.env.observation_spec())
+        # transpose observation_space if channels_first is True
+        if channels_first:
+            if isinstance(self.observation_space, spaces.Box):
+                space = self.observation_space
+                self.observation_space = spaces.Box(
+                    low=space.low.transpose(2, 0, 1),
+                    high=space.high.transpose(2, 0, 1),
+                    dtype=space.dtype
+                )
+            elif isinstance(self.observation_space[self.pixels_observation_key], spaces.Box):
+                space = self.observation_space[self.pixels_observation_key]
+                new_space = {}
+                for key, val in self.observation_space.spaces.items():
+                    if key == self.pixels_observation_key:
+                        new_space[key] = spaces.Box(
+                            low=space.low.transpose(2, 0, 1),
+                            high=space.high.transpose(2, 0, 1),
+                            dtype=space.dtype
+                        )
+                    else:
+                        new_space[key] = val
+                self.observation_space = spaces.Dict(new_space)
+            else:
+                import warnings
+                warnings.warn(
+                    "channels_first is set to True, however,"
+                    f" cannot transpose observation space accordingly: {self.observation_space}"
+                )
+
         self.action_space = convert_dm_control_to_gym_space(self.env.action_spec())
         self.viewer = None
 
