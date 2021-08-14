@@ -19,7 +19,8 @@ def make_env(flatten_obs=True, from_pixels=False, frame_skip=1, max_episode_step
 
 for difficulty in [None, 'easy', 'medium', 'hard']:
     for domain_name, task_name in ALL_TASKS:
-        ID = f'{domain_name.capitalize()}-{task_name}-{difficulty if difficulty else ""}-v1'
+        suffix = difficulty + '-v1' if difficulty else 'v1'
+        ID = f'{domain_name.capitalize()}-{task_name}-{suffix}'
         register(id=ID,
                  entry_point='distracting_control:make_env',
                  kwargs=dict(domain_name=domain_name,
