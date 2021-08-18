@@ -36,8 +36,7 @@ def get_color_kwargs(scale, dynamic):
 
 def get_camera_kwargs(domain_name, scale, dynamic):
     # assert domain_name in ['reacher', 'cartpole', 'finger', 'cheetah', 'ball_in_cup', 'walker']
-    assert scale >= 0.0
-    assert scale <= 1.0
+    assert 0.0 <= scale <= 1.0, f"scale needs to be in [0, 1]. Currently {scale}."
     return dict(
         vertical_delta=np.pi / 2 * scale,
         horizontal_delta=np.pi / 2 * scale,
