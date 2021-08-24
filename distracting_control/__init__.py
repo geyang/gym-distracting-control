@@ -19,7 +19,7 @@ def make_env(flatten_obs=True, from_pixels=False, frame_skip=1, max_episode_step
     return TimeLimit(env, max_episode_steps=max_episode_steps)
 
 
-for difficulty in [None, 'easy', 'medium', 'hard']:
+for difficulty in ['easy', 'medium', 'hard']:
     for domain_name, task_name in ALL_TASKS:
         suffix = difficulty + '-v1' if difficulty else 'v1'
         ID = f'{domain_name.capitalize()}-{task_name}-{suffix}'
