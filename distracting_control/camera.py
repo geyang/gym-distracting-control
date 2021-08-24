@@ -20,6 +20,8 @@ import copy
 import numpy as np
 from dm_control.rl import control
 
+from .mixins import GetStateMixin
+
 CAMERA_MODES = ['fixed', 'track', 'trackcom', 'targetbody', 'targetbodycom']
 
 
@@ -157,7 +159,7 @@ def get_lookat_point(physics, camera_id):
     return rotated_vec + physics.named.data.cam_xpos[camera_id]
 
 
-class DistractingCameraEnv(control.Environment):
+class DistractingCameraEnv(control.Environment, GetStateMixin):
     """Environment wrapper for camera pose visual distraction.
 
     **NOTE**: This wrapper should be applied BEFORE the pixel wrapper to make sure
@@ -177,7 +179,8 @@ class DistractingCameraEnv(control.Environment):
                  max_zoom_in_percent,
                  max_zoom_out_percent,
                  limit_to_upper_quadrant=False,
-                 seed=None):
+                 seed=None,
+                 fix_camera=False):
         self._env = env
         self._camera_id = camera_id
         self._horizontal_delta = horizontal_delta
@@ -208,6 +211,9 @@ class DistractingCameraEnv(control.Environment):
         self._radius = None
         self._roll_vel = None
         self._vel_scaling = None
+
+        self._fix_camera = fix_camera
+        self._seed = seed
 
     def setup_camera(self):
         """Set up camera motion ranges and state."""
@@ -273,22 +279,22 @@ class DistractingCameraEnv(control.Environment):
     def reset(self):
         """Reset the camera state. """
         time_step = self._env.reset()
-        self.setup_camera()
+        if self._camera_type is None or not self._fix_camera:
+            self.setup_camera()
+
         self._apply()
         return time_step
 
     def step(self, action):
         time_step = self._env.step(action)
 
-        if time_step.first():
+        if time_step.first() and not self._fix_camera:
             self.setup_camera()
 
         self._apply()
         return time_step
 
     def _apply(self):
-        if not self._camera_type:
-            self.setup_camera()
 
         # Random walk the velocity.
         vel_delta = self._random_state.randn(3)
@@ -351,3 +357,25 @@ class DistractingCameraEnv(control.Environment):
             return getattr(self._env, attr)
         raise AttributeError("'{}' object has no attribute '{}'".format(
             type(self).__name__, attr))
+
+    @classmethod
+    def from_dict(cls, env, state):
+
+        # Instantiate the class in whatever way and set attributes
+        instance = cls(env,
+                       state['_camera_id'],
+                       state['_horizontal_delta'],
+                       state['_vertical_delta'],
+                       state['_max_vel'],
+                       state['_vel_std'],
+                       state['_roll_delta'],
+                       state['_max_roll_vel'],
+                       state['_roll_vel_std'],
+                       state['_max_zoom_in_percent'],
+                       state['_max_zoom_out_percent'],
+                       )
+        for key, val in state.items():
+            setattr(instance, key, val)
+
+        assert instance._fix_camera
+        return instance

@@ -22,6 +22,7 @@ used in the original paper. Each distraction wrapper can be used independently
 though.
 """
 import os
+from copy import deepcopy
 
 try:
     from dm_control import suite  # pylint: disable=g-import-not-at-top
@@ -44,6 +45,7 @@ def is_available():
 def load(domain_name,
          task_name,
          difficulty=None,
+         distraction_types=None,
          dynamic=False,
          background_dataset_path=None,
          background_dataset_videos="train",
@@ -56,7 +58,9 @@ def load(domain_name,
          render_kwargs=None,
          from_pixels=True,
          pixels_only=True,
-         pixels_observation_key="pixels"):
+         pixels_observation_key="pixels",
+         distraction_dict=None,
+         fix_distraction=False):
     """Returns an environment from a domain name, task name and optional settings.
 
     ```python
@@ -101,6 +105,9 @@ def load(domain_name,
     if difficulty not in [None, "easy", "medium", "hard"]:
         raise ValueError("Difficulty should be one of: 'easy', 'medium', 'hard'.")
 
+    distraction_types = distraction_types or ()
+    distraction_dict = distraction_dict or {}
+    distraction_dict = deepcopy(distraction_dict)
     render_kwargs = render_kwargs or {}
     if "camera_id" not in render_kwargs:
         render_kwargs["camera_id"] = 2 if domain_name == "quadruped" else 0
@@ -108,10 +115,15 @@ def load(domain_name,
     env = suite.load(domain_name, task_name, task_kwargs=task_kwargs, environment_kwargs=environment_kwargs,
                      visualize_reward=visualize_reward)
 
-    # Apply background distractions.
-    if difficulty or background_kwargs:
+    saved_background = distraction_dict.get('DistractingBackgroundEnv', None)
+    if saved_background:
+        print('loading from saved_background')
+        env = background.DistractingBackgroundEnv.from_dict(env, saved_background)
+    elif 'background' in distraction_types and (difficulty or background_kwargs):
+        # Apply background distractions.
+
         background_dataset_path = (background_dataset_path or BG_DATA_PATH)
-        final_background_kwargs = dict()
+        final_background_kwargs = dict(fix_background=fix_distraction)
         if difficulty:
             # Get kwargs for the given difficulty.
             num_videos = suite_utils.DIFFICULTY_NUM_VIDEOS[difficulty]
@@ -131,8 +143,15 @@ def load(domain_name,
         env = background.DistractingBackgroundEnv(env, **final_background_kwargs)
 
     # Apply camera distractions.
-    if difficulty or camera_kwargs:
-        final_camera_kwargs = dict(camera_id=render_kwargs["camera_id"])
+    saved_camera = distraction_dict.get('DistractingCameraEnv', None)
+    if saved_camera:
+        print('loading saved camera distraction')
+        env = camera.DistractingCameraEnv.from_dict(env, saved_camera)
+    elif 'camera' in distraction_types and (difficulty or camera_kwargs):
+        final_camera_kwargs = dict(
+            camera_id=render_kwargs["camera_id"],
+            fix_camera=fix_distraction
+        )
         if difficulty:
             # Get kwargs for the given difficulty.
             scale = suite_utils.DIFFICULTY_SCALE[difficulty]
@@ -143,8 +162,12 @@ def load(domain_name,
         env = camera.DistractingCameraEnv(env, **final_camera_kwargs)
 
     # Apply color distractions.
-    if difficulty or color_kwargs:
-        final_color_kwargs = dict()
+    saved_color = distraction_dict.get('DistractingColorEnv', None)
+    if saved_color:
+        print('loading saved color distraction')
+        env = color.DistractingColorEnv.from_dict(env, saved_color)
+    elif 'color' in distraction_types and (difficulty or color_kwargs):
+        final_color_kwargs = dict(fix_color=fix_distraction)
         if difficulty:
             # Get kwargs for the given difficulty.
             scale = suite_utils.DIFFICULTY_SCALE[difficulty]
