@@ -45,6 +45,7 @@ class DistractingEnv(gym.Env):
                  domain_name,
                  task_name,
                  difficulty,
+                 distraction_types,
                  dynamic=False,
                  background_data_path=None,
                  background_kwargs=None,
@@ -69,6 +70,9 @@ class DistractingEnv(gym.Env):
                  no_gravity=False,
                  non_newtonian=False,
                  skip_start=None,  # useful in Manipulator for letting things settle
+
+                 distraction_dict=None,
+                 fix_distraction=False
                  ):
         """
 
@@ -95,6 +99,7 @@ class DistractingEnv(gym.Env):
         :param no_gravity:
         :param non_newtonian:
         :param skip_start:
+        :param fix_distraction:
         """
 
         self.render_kwargs = dict(
@@ -109,6 +114,7 @@ class DistractingEnv(gym.Env):
                               dynamic=dynamic,
 
                               # distractor kwargs
+                              distraction_types=distraction_types,
                               background_dataset_path=background_data_path,
                               background_dataset_videos=background_dataset_videos,
                               background_kwargs=background_kwargs,
@@ -123,6 +129,8 @@ class DistractingEnv(gym.Env):
                               render_kwargs=self.render_kwargs,
                               from_pixels=from_pixels,
                               pixels_observation_key=pixels_observation_key,
+
+                              fix_distraction=fix_distraction,
                               )
         self.pixels_observation_key = pixels_observation_key
         self.metadata = {'render.modes': ['human', 'rgb_array'],

@@ -27,7 +27,7 @@ class DistractingColorEnv(control.Environment):
     the color changes are applied before rendering occurs.
     """
 
-    def __init__(self, env, step_std, max_delta, seed=None):
+    def __init__(self, env, step_std, max_delta, fix_color=False, seed=None):
         """Initialize the environment wrapper.
 
         Args:
@@ -41,18 +41,21 @@ class DistractingColorEnv(control.Environment):
         self._env = env
         self._step_std = step_std
         self._max_delta = max_delta
-        self._random_state = np.random.RandomState()
+        self._random_state = np.random.RandomState(seed=seed)
 
         self._cam_type = None
         self._current_rgb = None
         self._max_rgb = None
         self._min_rgb = None
         self._original_rgb = None
+        self._fix_color = fix_color
+        self._seed = seed
 
     def reset(self):
         """Reset the distractions state."""
         time_step = self._env.reset()
-        self._reset_color()
+        if self._original_rgb is None or not self._fix_color:
+            self._reset_color()
         return time_step
 
     def _reset_color(self):
@@ -73,7 +76,7 @@ class DistractingColorEnv(control.Environment):
     def step(self, action):
         time_step = self._env.step(action)
 
-        if time_step.first():
+        if time_step.first() and not self._fix_color:
             self._reset_color()
             return time_step
 

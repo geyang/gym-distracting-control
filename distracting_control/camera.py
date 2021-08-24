@@ -177,7 +177,8 @@ class DistractingCameraEnv(control.Environment):
                  max_zoom_in_percent,
                  max_zoom_out_percent,
                  limit_to_upper_quadrant=False,
-                 seed=None):
+                 seed=None,
+                 fix_camera=False):
         self._env = env
         self._camera_id = camera_id
         self._horizontal_delta = horizontal_delta
@@ -208,6 +209,9 @@ class DistractingCameraEnv(control.Environment):
         self._radius = None
         self._roll_vel = None
         self._vel_scaling = None
+
+        self._fix_camera = fix_camera
+        self._seed = seed
 
     def setup_camera(self):
         """Set up camera motion ranges and state."""
@@ -273,22 +277,22 @@ class DistractingCameraEnv(control.Environment):
     def reset(self):
         """Reset the camera state. """
         time_step = self._env.reset()
-        self.setup_camera()
+        if self._camera_type is None or not self._fix_camera:
+            self.setup_camera()
+
         self._apply()
         return time_step
 
     def step(self, action):
         time_step = self._env.step(action)
 
-        if time_step.first():
+        if time_step.first() and not self._fix_camera:
             self.setup_camera()
 
         self._apply()
         return time_step
 
     def _apply(self):
-        if not self._camera_type:
-            self.setup_camera()
 
         # Random walk the velocity.
         vel_delta = self._random_state.randn(3)

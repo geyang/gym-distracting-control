@@ -44,6 +44,7 @@ def is_available():
 def load(domain_name,
          task_name,
          difficulty=None,
+         distraction_types=None,
          dynamic=False,
          background_dataset_path=None,
          background_dataset_videos="train",
@@ -56,7 +57,8 @@ def load(domain_name,
          render_kwargs=None,
          from_pixels=True,
          pixels_only=True,
-         pixels_observation_key="pixels"):
+         pixels_observation_key="pixels",
+         fix_distraction=False):
     """Returns an environment from a domain name, task name and optional settings.
 
     ```python
@@ -101,6 +103,7 @@ def load(domain_name,
     if difficulty not in [None, "easy", "medium", "hard"]:
         raise ValueError("Difficulty should be one of: 'easy', 'medium', 'hard'.")
 
+    distraction_types = distraction_types or ()
     render_kwargs = render_kwargs or {}
     if "camera_id" not in render_kwargs:
         render_kwargs["camera_id"] = 2 if domain_name == "quadruped" else 0
@@ -111,7 +114,7 @@ def load(domain_name,
     # Apply background distractions.
     if difficulty or background_kwargs:
         background_dataset_path = (background_dataset_path or BG_DATA_PATH)
-        final_background_kwargs = dict()
+        final_background_kwargs = dict(fix_background=fix_distraction)
         if difficulty:
             # Get kwargs for the given difficulty.
             num_videos = suite_utils.DIFFICULTY_NUM_VIDEOS[difficulty]
@@ -132,7 +135,10 @@ def load(domain_name,
 
     # Apply camera distractions.
     if difficulty or camera_kwargs:
-        final_camera_kwargs = dict(camera_id=render_kwargs["camera_id"])
+        final_camera_kwargs = dict(
+            camera_id=render_kwargs["camera_id"],
+            fix_camera=fix_distraction
+        )
         if difficulty:
             # Get kwargs for the given difficulty.
             scale = suite_utils.DIFFICULTY_SCALE[difficulty]
@@ -144,7 +150,7 @@ def load(domain_name,
 
     # Apply color distractions.
     if difficulty or color_kwargs:
-        final_color_kwargs = dict()
+        final_color_kwargs = dict(fix_color=fix_distraction)
         if difficulty:
             # Get kwargs for the given difficulty.
             scale = suite_utils.DIFFICULTY_SCALE[difficulty]
