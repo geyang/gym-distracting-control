@@ -22,6 +22,7 @@ used in the original paper. Each distraction wrapper can be used independently
 though.
 """
 import os
+from copy import deepcopy
 
 try:
     from dm_control import suite  # pylint: disable=g-import-not-at-top
@@ -106,6 +107,7 @@ def load(domain_name,
 
     distraction_types = distraction_types or ()
     distraction_dict = distraction_dict or {}
+    distraction_dict = deepcopy(distraction_dict)
     render_kwargs = render_kwargs or {}
     if "camera_id" not in render_kwargs:
         render_kwargs["camera_id"] = 2 if domain_name == "quadruped" else 0

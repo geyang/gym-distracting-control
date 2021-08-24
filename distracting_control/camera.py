@@ -377,7 +377,5 @@ class DistractingCameraEnv(control.Environment, GetStateMixin):
         for key, val in state.items():
             setattr(instance, key, val)
 
-        instance.setup_camera()
-
         assert instance._fix_camera
         return instance
