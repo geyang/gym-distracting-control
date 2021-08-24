@@ -99,6 +99,7 @@ class DistractingEnv(gym.Env):
         :param no_gravity:
         :param non_newtonian:
         :param skip_start:
+        :param distraction_dict:
         :param fix_distraction:
         """
 
@@ -131,6 +132,7 @@ class DistractingEnv(gym.Env):
                               pixels_observation_key=pixels_observation_key,
 
                               fix_distraction=fix_distraction,
+                              distraction_dict=distraction_dict,
                               )
         self.pixels_observation_key = pixels_observation_key
         self.metadata = {'render.modes': ['human', 'rgb_array'],
@@ -255,3 +257,21 @@ class DistractingEnv(gym.Env):
             self.viewer.close()
             self.viewer = None
         return self.env.close()
+
+    def get_distracting_state(self):
+        """Go through the child classes by recursively visting ._env property,
+        and call save_state() method if it's either of background ,color, camera env.
+        """
+        import os
+        from .background import DistractingBackgroundEnv
+        from .camera import DistractingCameraEnv
+        from .color import DistractingColorEnv
+        target = self.env
+        assert hasattr(target, '_env')
+
+        state = {}
+        while hasattr(target, '_env'):
+            if isinstance(target, (DistractingBackgroundEnv, DistractingColorEnv, DistractingCameraEnv)):
+                state[type(target).__name__] = target.get_distracting_state()
+            target = target._env  # Go deeper
+        return state

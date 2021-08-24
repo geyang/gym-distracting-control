@@ -20,6 +20,8 @@ import copy
 import numpy as np
 from dm_control.rl import control
 
+from .mixins import GetStateMixin
+
 CAMERA_MODES = ['fixed', 'track', 'trackcom', 'targetbody', 'targetbodycom']
 
 
@@ -157,7 +159,7 @@ def get_lookat_point(physics, camera_id):
     return rotated_vec + physics.named.data.cam_xpos[camera_id]
 
 
-class DistractingCameraEnv(control.Environment):
+class DistractingCameraEnv(control.Environment, GetStateMixin):
     """Environment wrapper for camera pose visual distraction.
 
     **NOTE**: This wrapper should be applied BEFORE the pixel wrapper to make sure
@@ -355,3 +357,27 @@ class DistractingCameraEnv(control.Environment):
             return getattr(self._env, attr)
         raise AttributeError("'{}' object has no attribute '{}'".format(
             type(self).__name__, attr))
+
+    @classmethod
+    def from_dict(cls, env, state):
+
+        # Instantiate the class in whatever way and set attributes
+        instance = cls(env,
+                       state['_camera_id'],
+                       state['_horizontal_delta'],
+                       state['_vertical_delta'],
+                       state['_max_vel'],
+                       state['_vel_std'],
+                       state['_roll_delta'],
+                       state['_max_roll_vel'],
+                       state['_roll_vel_std'],
+                       state['_max_zoom_in_percent'],
+                       state['_max_zoom_out_percent'],
+                       )
+        for key, val in state.items():
+            setattr(instance, key, val)
+
+        instance.setup_camera()
+
+        assert instance._fix_camera
+        return instance

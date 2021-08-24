@@ -23,6 +23,8 @@ from PIL import Image
 from dm_control.mujoco.wrapper import mjbindings
 from dm_control.rl import control
 
+from .mixins import GetStateMixin
+
 DAVIS17_TRAINING_VIDEOS = [
     'bear', 'bmx-bumps', 'boat', 'boxing-fisheye', 'breakdance-flare', 'bus',
     'car-turn', 'cat-girl', 'classic-car', 'color-run', 'crossing',
@@ -73,7 +75,7 @@ def blend_to_background(alpha, image, background):
                 + (1. - alpha) * background.astype(np.float32)).astype(np.uint8)
 
 
-class DistractingBackgroundEnv(control.Environment):
+class DistractingBackgroundEnv(control.Environment, GetStateMixin):
     """Environment wrapper for background visual distraction.
 
     **NOTE**: This wrapper should be applied BEFORE the pixel wrapper to make sure
@@ -261,3 +263,23 @@ class DistractingBackgroundEnv(control.Environment):
             return getattr(self._env, attr)
         raise AttributeError("'{}' object has no attribute '{}'".format(
             type(self).__name__, attr))
+
+    @classmethod
+    def from_dict(cls, env, state):
+
+        # Instantiate the class in whatever way and set attributes
+        instance = cls(env)
+        for key, val in state.items():
+            setattr(instance, key, val)
+
+        # instance._background = Texture(sky_size, sky_address, texturized_images)
+        assert instance._background is not None
+        assert instance._fix_background
+
+        if instance._ground_plane_alpha is not None:
+            instance._env.physics.named.model.mat_rgba['grid',
+                                                       'a'] = instance._ground_plane_alpha
+        instance._env.physics.model.tex_height[SKY_TEXTURE_INDEX] = 800
+        instance._apply()
+
+        return instance

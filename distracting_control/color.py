@@ -19,8 +19,9 @@
 import numpy as np
 from dm_control.rl import control
 
+from .mixins import GetStateMixin
 
-class DistractingColorEnv(control.Environment):
+class DistractingColorEnv(control.Environment, GetStateMixin):
     """Environment wrapper for color visual distraction.
 
     **NOTE**: This wrapper should be applied BEFORE the pixel wrapper to make sure
@@ -101,3 +102,23 @@ class DistractingColorEnv(control.Environment):
             return getattr(self._env, attr)
         raise AttributeError("'{}' object has no attribute '{}'".format(
             type(self).__name__, attr))
+
+    @classmethod
+    def from_dict(cls, env, state):
+        # instance._original_rgb must be obtained from the current env, never reuse the old one.
+        state.pop('_original_rgb')
+
+        # Instantiate the class in whatever way and set attributes
+        instance = cls(env,
+                       state['_step_std'],
+                       state['_max_delta'])
+        for key, val in state.items():
+            setattr(instance, key, val)
+
+        assert instance._fix_color
+
+        # Directly apply the color changes.
+        instance._env.physics.model.mat_rgba[:, :3] = instance._current_rgb
+        instance._original_rgb = np.copy(instance._env.physics.model.mat_rgba)[:, :3]
+
+        return instance
