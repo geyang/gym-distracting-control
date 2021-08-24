@@ -8,7 +8,7 @@ def make_env(flatten_obs=True, from_pixels=False, frame_skip=1, max_episode_step
     from distracting_control.gym_env import DistractingEnv
     env = DistractingEnv(from_pixels=from_pixels, frame_skip=frame_skip, **kwargs)
     if from_pixels:
-        from gym_dmc.wrappers import ObservationByKey
+        from .wrappers import ObservationByKey
         env = ObservationByKey(env, "pixels")
     elif flatten_obs:
         from gym.wrappers import FlattenObservation
