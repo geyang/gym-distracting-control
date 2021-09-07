@@ -130,7 +130,7 @@ class DistractingEnv(gym.Env):
 
         self.observation_space = convert_dm_control_to_gym_space(self.env.observation_spec())
         # transpose observation_space if channels_first is True
-        if channels_first:
+        if from_pixels and channels_first:
             if isinstance(self.observation_space, spaces.Box):
                 space = self.observation_space
                 self.observation_space = spaces.Box(
