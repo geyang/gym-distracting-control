@@ -18,7 +18,6 @@
 import collections
 import numpy as np
 import os
-import tensorflow as tf
 from PIL import Image
 from dm_control.mujoco.wrapper import mjbindings
 from dm_control.rl import control
@@ -49,6 +48,16 @@ DAVIS17_VALIDATION_VIDEOS = [
 SKY_TEXTURE_INDEX = 0
 Texture = collections.namedtuple('Texture', ('size', 'address', 'textures'))
 
+def listdir(directory):
+    """almost identical to os.listdir
+
+    os.listdir can return byte string, so this force it to string
+    NOTE: original distracting_control used tf.io.gfile.list.
+    """
+    return [
+        fname if isinstance(fname, str) else fname.decode("utf-8")
+        for fname in os.listdir(directory)
+    ]
 
 def imread(filename):
     img = Image.open(filename)
@@ -61,8 +70,9 @@ def size_and_flatten(image, ref_height, ref_width):
     image_height, image_width = image.shape[:2]
 
     if image_height != ref_height or image_width != ref_width:
-        image = tf.cast(tf.image.resize(image, [ref_height, ref_width]), tf.uint8)
-    return tf.reshape(image, [-1]).numpy()
+        # NOTE: Use bi-linear interpolation (same as the original tf.image.resize)
+        image = np.array(Image.fromarray(image).resize((ref_height, ref_width), resample=Image.BILINEAR), dtype=np.uint8)
+    return image.flatten()
 
 
 def blend_to_background(alpha, image, background):
@@ -115,7 +125,7 @@ class DistractingBackgroundEnv(control.Environment, GetStateMixin):
         else:
             # Use all videos if no specific ones were passed.
             if not dataset_videos:
-                dataset_videos = sorted(tf.io.gfile.listdir(dataset_path))
+                dataset_videos = sorted(listdir(dataset_path))
             # Replace video placeholders 'train'/'val' with the list of videos.
             elif dataset_videos in ['train', 'training']:
                 dataset_videos = DAVIS17_TRAINING_VIDEOS
@@ -178,7 +188,7 @@ class DistractingBackgroundEnv(control.Environment, GetStateMixin):
                 file_names = [
                     os.path.join(path, fn)
                     for path in self._video_paths
-                    for fn in tf.io.gfile.listdir(path)
+                    for fn in listdir(path)
                 ]
                 self._random_state.shuffle(file_names)
                 # Load only the first n images for performance reasons.
@@ -187,7 +197,7 @@ class DistractingBackgroundEnv(control.Environment, GetStateMixin):
             else:
                 # Randomly pick a video and load all images.
                 video_path = self._random_state.choice(self._video_paths)
-                file_names = sorted(tf.io.gfile.listdir(video_path))
+                file_names = sorted(listdir(video_path))
                 if not self._dynamic:
                     # Randomly pick a single static frame.
                     file_names = [self._random_state.choice(file_names)]
