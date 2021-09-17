@@ -19,6 +19,7 @@ import collections
 import numpy as np
 import os
 from PIL import Image
+import cv2
 from dm_control.mujoco.wrapper import mjbindings
 from dm_control.rl import control
 
@@ -71,7 +72,7 @@ def size_and_flatten(image, ref_height, ref_width):
 
     if image_height != ref_height or image_width != ref_width:
         # NOTE: Use bi-linear interpolation (same as the original tf.image.resize)
-        image = np.array(Image.fromarray(image).resize((ref_height, ref_width), resample=Image.BILINEAR), dtype=np.uint8)
+        image = cv2.resize(image, (ref_height, ref_width), interpolation=cv2.INTER_LINEAR).astype(np.uint8)
     return image.flatten()
 
 
