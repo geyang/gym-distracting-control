@@ -1,6 +1,71 @@
 The Distracting Control Suite
 =============================
 
+This is a packaged version of the ``distracting_control`` suite from
+*Stone et al*. We provide OpenAI gym bindings, to make the original code-block
+base easier to use.
+
+Getting Started
+---------------
+
+.. code-block:: bash
+
+   pip install distracting_control
+
+Then in your python script:
+
+.. code-block:: python
+
+   import gym
+
+   env = gyn.make('gdc:Hopper-hop-easy-v1', from_pixel=True)
+   obs = env.reset()
+   doc.figure(obs, "figures/hopper_readme.png?raw=true")
+
+Detailed API
+------------
+
+Take a look at the test file in the `https://github.com/geyang/distracting_control/blob/master/specs <https://github.com/geyang/distracting_control/blob/master/specs>`__ folder, and
+the source code-block. DeepMind control has a lot of low level binding burried
+in the source code-block.
+
+.. code-block:: python
+
+   def test_max_episode_steps():
+       env = gym.make('distracting_control:Walker-walk-easy-v1')
+       assert env._max_episode_steps == 250
+
+
+   def test_flat_obs():
+       env = gym.make('distracting_control:Walker-walk-easy-v1', frame_skip=4)
+       env.env.env.env.observation_spec()
+       assert env.reset().shape == (24,)
+
+
+   def test_frame_skip():
+       env = gym.make('distracting_control:Walker-walk-easy-v1', from_pixels=True, frame_skip=8)
+       assert env._max_episode_steps == 125
+
+
+   def test_channel_first():
+       env = gym.make('distracting_control:Walker-walk-easy-v1', from_pixels=True, channels_first=True)
+       assert env.reset().shape == (3, 84, 84)
+
+
+   def test_channel_last():
+       env = gym.make('distracting_control:Walker-walk-easy-v1', from_pixels=True, frame_skip=8, channels_first=False)
+       assert env._max_episode_steps == 125
+       assert env.reset().shape == (84, 84, 3)
+
+Important Changes from *Stone et al*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. [planned] remove tensorflow dependency
+2. [planned] increase ground floor transparency in ``Hopper``
+
+Original README
+---------------
+
 ``distracting_control`` extends ``dm_control`` with static or dynamic
 visual distractions in the form of changing colors, backgrounds, and
 camera poses. Details and experimental results can be found in our
