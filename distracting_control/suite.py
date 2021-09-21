@@ -45,7 +45,9 @@ def is_available():
 def load(domain_name,
          task_name,
          difficulty=None,
+         intensity=None,
          distraction_types=None,
+         sample_from_edge=False,
          dynamic=False,
          background_dataset_path=None,
          background_dataset_videos="train",
@@ -60,7 +62,8 @@ def load(domain_name,
          pixels_only=True,
          pixels_observation_key="pixels",
          distraction_dict=None,
-         fix_distraction=False):
+         fix_distraction=False,
+         distraction_seed=None):
     """Returns an environment from a domain name, task name and optional settings.
 
     ```python
@@ -120,6 +123,7 @@ def load(domain_name,
         print('loading from saved_background')
         env = background.DistractingBackgroundEnv.from_dict(env, saved_background)
     elif 'background' in distraction_types and (difficulty or background_kwargs):
+        assert intensity is None, "intensity keyword is not supported for background distraction!"
         # Apply background distractions.
 
         background_dataset_path = (background_dataset_path or BG_DATA_PATH)
@@ -140,42 +144,44 @@ def load(domain_name,
         if background_kwargs:
             # Overwrite kwargs with those passed here.
             final_background_kwargs.update(background_kwargs)
-        env = background.DistractingBackgroundEnv(env, **final_background_kwargs)
+        env = background.DistractingBackgroundEnv(env, seed=distraction_seed, **final_background_kwargs)
 
     # Apply camera distractions.
     saved_camera = distraction_dict.get('DistractingCameraEnv', None)
     if saved_camera:
         print('loading saved camera distraction')
         env = camera.DistractingCameraEnv.from_dict(env, saved_camera)
-    elif 'camera' in distraction_types and (difficulty or camera_kwargs):
+    elif 'camera' in distraction_types and (difficulty or intensity or camera_kwargs):
         final_camera_kwargs = dict(
             camera_id=render_kwargs["camera_id"],
-            fix_camera=fix_distraction
+            fix_camera=fix_distraction,
+            sample_from_edge=sample_from_edge
         )
-        if difficulty:
+        if difficulty or intensity:
             # Get kwargs for the given difficulty.
-            scale = suite_utils.DIFFICULTY_SCALE[difficulty]
+            scale = suite_utils.DIFFICULTY_SCALE[difficulty] if difficulty else intensity
             final_camera_kwargs.update(suite_utils.get_camera_kwargs(domain_name, scale, dynamic))
         if camera_kwargs:
             # Overwrite kwargs with those passed here.
             final_camera_kwargs.update(camera_kwargs)
-        env = camera.DistractingCameraEnv(env, **final_camera_kwargs)
+        env = camera.DistractingCameraEnv(env, seed=distraction_seed, **final_camera_kwargs)
 
     # Apply color distractions.
     saved_color = distraction_dict.get('DistractingColorEnv', None)
     if saved_color:
         print('loading saved color distraction')
         env = color.DistractingColorEnv.from_dict(env, saved_color)
-    elif 'color' in distraction_types and (difficulty or color_kwargs):
-        final_color_kwargs = dict(fix_color=fix_distraction)
-        if difficulty:
+    elif 'color' in distraction_types and (difficulty or intensity or color_kwargs):
+        final_color_kwargs = dict(fix_color=fix_distraction,
+                                  sample_from_edge=sample_from_edge)
+        if difficulty or intensity:
             # Get kwargs for the given difficulty.
-            scale = suite_utils.DIFFICULTY_SCALE[difficulty]
+            scale = suite_utils.DIFFICULTY_SCALE[difficulty] if difficulty else intensity
             final_color_kwargs.update(suite_utils.get_color_kwargs(scale, dynamic))
         if color_kwargs:
             # Overwrite kwargs with those passed here.
             final_color_kwargs.update(color_kwargs)
-        env = color.DistractingColorEnv(env, **final_color_kwargs)
+        env = color.DistractingColorEnv(env, seed=distraction_seed, **final_color_kwargs)
 
     # note: allow state space only if from_pixels is False
     if from_pixels:

@@ -76,3 +76,12 @@ def get_background_kwargs(domain_name,
         dataset_videos=dataset_videos,
         shuffle_buffer_size=100 if shuffle else None,
     )
+
+
+def sample(random_state, low=0.0, high=1.0, size=None, distribution='uniform'):
+    if distribution == 'uniform':
+        return random_state.uniform(low, high, size)
+    elif distribution == 'edge':
+        return random_state.choice([low, high], size=size)
+    else:
+        ValueError('Only uniform and edge are supported right now')

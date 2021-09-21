@@ -28,7 +28,7 @@ class DistractingColorEnv(control.Environment, GetStateMixin):
     the color changes are applied before rendering occurs.
     """
 
-    def __init__(self, env, step_std, max_delta, fix_color=False, seed=None):
+    def __init__(self, env, step_std, max_delta, fix_color=False, seed=None, sample_from_edge=False):
         """Initialize the environment wrapper.
 
         Args:
@@ -49,7 +49,10 @@ class DistractingColorEnv(control.Environment, GetStateMixin):
         self._max_rgb = None
         self._min_rgb = None
         self._original_rgb = None
+
+        # Fix color across episode (This is different from `dynamic`!)
         self._fix_color = fix_color
+        self._sample_from_edge = sample_from_edge
         self._seed = seed
 
     def reset(self):
@@ -60,6 +63,7 @@ class DistractingColorEnv(control.Environment, GetStateMixin):
         return time_step
 
     def _reset_color(self):
+        from .suite_utils import sample
         # Save all original colors.
         if self._original_rgb is None:
             self._original_rgb = np.copy(self._env.physics.model.mat_rgba)[:, :3]
@@ -68,7 +72,8 @@ class DistractingColorEnv(control.Environment, GetStateMixin):
             self._min_rgb = np.clip(self._original_rgb - self._max_delta, 0.0, 1.0)
 
         # Pick random colors in the allowed ranges.
-        r = self._random_state.uniform(size=self._min_rgb.shape)
+        distribution = 'edge' if self._sample_from_edge else 'uniform'
+        r = sample(self._random_state, size=self._min_rgb.shape, distribution=distribution)
         self._current_rgb = self._min_rgb + r * (self._max_rgb - self._min_rgb)
 
         # Apply the color changes.

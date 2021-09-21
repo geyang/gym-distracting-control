@@ -180,7 +180,8 @@ class DistractingCameraEnv(control.Environment, GetStateMixin):
                  max_zoom_out_percent,
                  limit_to_upper_quadrant=False,
                  seed=None,
-                 fix_camera=False):
+                 fix_camera=False,  # Fix camera pose across episode (This is different from `dynamic`!)
+                 sample_from_edge=False):
         self._env = env
         self._camera_id = camera_id
         self._horizontal_delta = horizontal_delta
@@ -212,11 +213,16 @@ class DistractingCameraEnv(control.Environment, GetStateMixin):
         self._roll_vel = None
         self._vel_scaling = None
 
+        # Fix camera pose across episode (This is different from `dynamic`!)
         self._fix_camera = fix_camera
+        self._sample_from_edge = sample_from_edge
         self._seed = seed
 
     def setup_camera(self):
         """Set up camera motion ranges and state."""
+
+        from .suite_utils import sample
+
         # Define boundaries on the range of the camera motion.
         mode = self._env._physics.model.cam_mode[0]
 
@@ -257,24 +263,22 @@ class DistractingCameraEnv(control.Environment, GetStateMixin):
         self._max_radius = start_r + start_r * self._max_zoom_out_percent
 
         # Decide the starting position for the camera.
-        self._h_angle = self._random_state.uniform(self._min_h_angle,
-                                                   self._max_h_angle)
 
-        self._v_angle = self._random_state.uniform(self._min_v_angle,
-                                                   self._max_v_angle)
+        distribution = 'edge' if self._sample_from_edge else 'uniform'
+        self._h_angle = sample(self._random_state, self._min_h_angle, self._max_h_angle, distribution=distribution)
 
-        self._radius = self._random_state.uniform(self._min_radius,
-                                                  self._max_radius)
+        self._v_angle = sample(self._random_state, self._min_v_angle, self._max_v_angle, distribution=distribution)
 
-        self._roll = self._random_state.uniform(self._min_roll, self._max_roll)
+        self._radius = sample(self._random_state, self._min_radius, self._max_radius, distribution=distribution)
+
+        self._roll = sample(self._random_state, self._min_roll, self._max_roll, distribution=distribution)
 
         # Decide the starting velocity for the camera.
-        vel = self._random_state.randn(3)
+        vel = self._random_state.randn(3)  # This is for the direction
         vel /= np.sqrt(np.sum(vel ** 2.))
-        vel *= self._random_state.uniform(0., self._max_vel)
+        vel *= sample(self._random_state, 0., self._max_vel, distribution=distribution)  #
         self._camera_vel = vel
-        self._roll_vel = self._random_state.uniform(-self._max_roll_vel,
-                                                    self._max_roll_vel)
+        self._roll_vel = sample(self._random_state, -self._max_roll_vel, self._max_roll_vel, distribution=distribution)
 
     def reset(self):
         """Reset the camera state. """
