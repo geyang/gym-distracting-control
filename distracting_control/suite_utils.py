@@ -34,7 +34,7 @@ def get_color_kwargs(scale, dynamic):
     return dict(max_delta=max_delta, step_std=step_std)
 
 
-def get_camera_kwargs(domain_name, scale, dynamic):
+def get_camera_kwargs(domain_name, scale, dynamic, disable_zoom=False):
     # assert domain_name in ['reacher', 'cartpole', 'finger', 'cheetah', 'ball_in_cup', 'walker']
     assert 0.0 <= scale <= 1.0, f"scale needs to be in [0, 1]. Currently {scale}."
     return dict(
@@ -46,8 +46,8 @@ def get_camera_kwargs(domain_name, scale, dynamic):
         max_vel=.4 * scale if dynamic else 0.,
         roll_std=np.pi / 300 * scale if dynamic else 0.,
         max_roll_vel=np.pi / 50 * scale if dynamic else 0.,
-        max_zoom_in_percent=.5 * scale,
-        max_zoom_out_percent=1.5 * scale,
+        max_zoom_in_percent=.5 * scale if not disable_zoom else 0.0,
+        max_zoom_out_percent=1.5 * scale if not disable_zoom else 0.0,
         limit_to_upper_quadrant='reacher' not in domain_name,
     )
 

@@ -148,6 +148,8 @@ def load(domain_name,
 
     # Apply camera distractions.
     saved_camera = distraction_dict.get('DistractingCameraEnv', None)
+    # NOTE: it's important to remove the entry with pop, since non-empty camera_kwargs triggers DistractingCameraEnv.
+    disable_zoom = camera_kwargs.pop('disable_zoom', False)
     if saved_camera:
         print('loading saved camera distraction')
         env = camera.DistractingCameraEnv.from_dict(env, saved_camera)
@@ -160,7 +162,7 @@ def load(domain_name,
         if difficulty or intensity:
             # Get kwargs for the given difficulty.
             scale = suite_utils.DIFFICULTY_SCALE[difficulty] if difficulty else intensity
-            final_camera_kwargs.update(suite_utils.get_camera_kwargs(domain_name, scale, dynamic))
+            final_camera_kwargs.update(suite_utils.get_camera_kwargs(domain_name, scale, dynamic, disable_zoom))
         if camera_kwargs:
             # Overwrite kwargs with those passed here.
             final_camera_kwargs.update(camera_kwargs)

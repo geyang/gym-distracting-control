@@ -2,10 +2,12 @@ from dm_control.suite import ALL_TASKS
 from gym.envs import register
 
 
-def make_env(flatten_obs=True, from_pixels=False, frame_skip=1, max_episode_steps=1000, **kwargs):
+def make_env(flatten_obs=True, from_pixels=False, frame_skip=1, max_episode_steps=1000, disable_zoom=False, **kwargs):
     max_episode_steps /= frame_skip
 
     from distracting_control.gym_env import DistractingEnv
+
+    kwargs.update({'camera_kwargs': {'disable_zoom': disable_zoom}})
 
     env = DistractingEnv(
         from_pixels=from_pixels, frame_skip=frame_skip, **kwargs)
