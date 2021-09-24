@@ -55,6 +55,7 @@ def load(domain_name,
          camera_kwargs=None,
          color_kwargs=None,
          task_kwargs=None,
+         disable_zoom=False,
          environment_kwargs=None,
          visualize_reward=False,
          render_kwargs=None,
@@ -123,7 +124,6 @@ def load(domain_name,
         print('loading from saved_background')
         env = background.DistractingBackgroundEnv.from_dict(env, saved_background)
     elif 'background' in distraction_types and (difficulty or background_kwargs):
-        assert intensity is None, "intensity keyword is not supported for background distraction!"
         # Apply background distractions.
 
         background_dataset_path = (background_dataset_path or BG_DATA_PATH)
@@ -149,7 +149,6 @@ def load(domain_name,
     # Apply camera distractions.
     saved_camera = distraction_dict.get('DistractingCameraEnv', None)
     # NOTE: it's important to remove the entry with pop, since non-empty camera_kwargs triggers DistractingCameraEnv.
-    disable_zoom = camera_kwargs.pop('disable_zoom', False)
     if saved_camera:
         print('loading saved camera distraction')
         env = camera.DistractingCameraEnv.from_dict(env, saved_camera)

@@ -59,6 +59,7 @@ class DistractingEnv(gym.Env):
                  color_kwargs=None,
                  task_kwargs=None,
                  environment_kwargs=None,
+                 disable_zoom=False,
                  visualize_reward=False,
                  pixels_observation_key="pixels",
 
@@ -130,6 +131,7 @@ class DistractingEnv(gym.Env):
                               background_kwargs=background_kwargs,
                               camera_kwargs=camera_kwargs,
                               color_kwargs=color_kwargs,
+                              disable_zoom=disable_zoom,
 
                               # original
                               task_kwargs=task_kwargs,
