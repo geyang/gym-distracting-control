@@ -45,7 +45,9 @@ class DistractingEnv(gym.Env):
                  domain_name,
                  task_name,
                  difficulty,
+                 intensity,
                  distraction_types,
+                 sample_from_edge=False,
                  dynamic=False,
                  background_data_path=None,
                  background_kwargs=None,
@@ -57,6 +59,7 @@ class DistractingEnv(gym.Env):
                  color_kwargs=None,
                  task_kwargs=None,
                  environment_kwargs=None,
+                 disable_zoom=False,
                  visualize_reward=False,
                  pixels_observation_key="pixels",
 
@@ -72,13 +75,15 @@ class DistractingEnv(gym.Env):
                  skip_start=None,  # useful in Manipulator for letting things settle
 
                  distraction_dict=None,
-                 fix_distraction=False
+                 fix_distraction=False,
+                 distraction_seed=0
                  ):
         """
 
         :param domain_name:
         :param task_name:
         :param difficulty:
+        :param intensity:
         :param dynamic:
         :param background_data_path:
         :param background_kwargs:
@@ -103,6 +108,9 @@ class DistractingEnv(gym.Env):
         :param fix_distraction:
         """
 
+        assert not (intensity is not None and difficulty), "You can only use one of difficulty levels or specify intensity manually." \
+            + f" But not both.\nintensity: {intensity}\tdifficulty: {difficulty}"
+
         self.render_kwargs = dict(
             height=height,
             width=width,
@@ -112,15 +120,18 @@ class DistractingEnv(gym.Env):
         self.env = suite.load(domain_name,
                               task_name,
                               difficulty,
+                              intensity,
                               dynamic=dynamic,
 
                               # distractor kwargs
                               distraction_types=distraction_types,
+                              sample_from_edge=sample_from_edge,
                               background_dataset_path=background_data_path,
                               background_dataset_videos=background_dataset_videos,
                               background_kwargs=background_kwargs,
                               camera_kwargs=camera_kwargs,
                               color_kwargs=color_kwargs,
+                              disable_zoom=disable_zoom,
 
                               # original
                               task_kwargs=task_kwargs,
@@ -133,6 +144,7 @@ class DistractingEnv(gym.Env):
 
                               fix_distraction=fix_distraction,
                               distraction_dict=distraction_dict,
+                              distraction_seed=distraction_seed,
                               )
         self.pixels_observation_key = pixels_observation_key
         self.metadata = {'render.modes': ['human', 'rgb_array'],
