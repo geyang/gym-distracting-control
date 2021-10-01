@@ -30,7 +30,10 @@ try:
 except ImportError:
     suite = None
 
-BG_DATA_PATH = f"{os.environ['HOME']}/datasets/DAVIS/JPEGImages/480p"
+# standard env for datasets, shared between projects
+DATA_PATH = os.environ.get("DATA_PATH", f"{os.environ['HOME']}/datasets")
+# env for the DAVIS used by GDC
+BG_DATA_PATH = os.environ.get("GCD_BG_DATA_PATH", f"{DATA_PATH}/DAVIS/JPEGImages/480p")
 
 from distracting_control import background
 from distracting_control import camera
