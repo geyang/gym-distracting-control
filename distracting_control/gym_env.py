@@ -14,7 +14,7 @@ def convert_dm_control_to_gym_space(dm_control_space, **kwargs):
                            dtype=dm_control_space.dtype)
         assert space.shape == dm_control_space.shape
         return space
-    elif isinstance(dm_control_space, specs.Array):
+    elif isinstance(dm_control_space, specs.Array) and not isinstance(dm_control_space, specs.BoundedArray):
         # In case this is an image
         # if isinstance(dm_control_space, specs.BoundedArray):
         if dm_control_space.dtype == np.uint8:
