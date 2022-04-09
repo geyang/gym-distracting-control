@@ -15,18 +15,23 @@ def convert_dm_control_to_gym_space(dm_control_space, **kwargs):
         assert space.shape == dm_control_space.shape
         return space
     elif isinstance(dm_control_space, specs.Array) and not isinstance(dm_control_space, specs.BoundedArray):
-        space = spaces.Box(low=-float('inf'),
-                           high=float('inf'),
-                           shape=dm_control_space.shape,
-                           dtype=dm_control_space.dtype)
-        return space
+        # In case this is an image
+        # if isinstance(dm_control_space, specs.BoundedArray):
+        if dm_control_space.dtype == np.uint8:
+            return spaces.Box(low=0,
+                              high=255,
+                              shape=dm_control_space.shape,
+                              dtype=dm_control_space.dtype)
+        return spaces.Box(low=-float('inf'),
+                          high=float('inf'),
+                          shape=dm_control_space.shape,
+                          dtype=dm_control_space.dtype)
     elif isinstance(dm_control_space, dict):
         kwargs.update(
             {key: convert_dm_control_to_gym_space(value)
              for key, value in dm_control_space.items()}
         )
-        space = spaces.Dict(kwargs)
-        return space
+        return spaces.Dict(kwargs)
 
 
 def extract_min_max(s):
@@ -108,8 +113,9 @@ class DistractingEnv(gym.Env):
         :param fix_distraction:
         """
 
-        assert not (intensity is not None and difficulty), "You can only use one of difficulty levels or specify intensity manually." \
-            + f" But not both.\nintensity: {intensity}\tdifficulty: {difficulty}"
+        assert not (
+                intensity is not None and difficulty), "You can only use one of difficulty levels or specify intensity manually." \
+                                                       + f" But not both.\nintensity: {intensity}\tdifficulty: {difficulty}"
 
         self.render_kwargs = dict(
             height=height,
@@ -273,7 +279,6 @@ class DistractingEnv(gym.Env):
         """Go through the child classes by recursively visting ._env property,
         and call save_state() method if it's either of background ,color, camera env.
         """
-        import os
         from .background import DistractingBackgroundEnv
         from .camera import DistractingCameraEnv
         from .color import DistractingColorEnv
