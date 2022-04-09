@@ -9,7 +9,7 @@ with open(path.join(path.abspath(path.dirname(__file__)), 'README'), encoding='u
 
 setup(name='distracting_control',
       packages=find_packages(exclude="specs"),
-      install_requires=["gym", "dm_control", "numpy", ],
+      install_requires=["gym>=0.21.0", "dm_control", "numpy", ],
       description='distractor control suite contains variants of the DeepMind Control suite with visual distraction',
       long_description=long_description,
       author='Ge Yang<ge.ike.yang@gmail.com>',

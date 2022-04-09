@@ -1,5 +1,5 @@
 from dm_control.suite import ALL_TASKS
-from gym.envs import register
+from gym.envs.registration import register
 
 
 def make_env(flatten_obs=True, from_pixels=False, frame_skip=1, max_episode_steps=1000, **kwargs):
@@ -19,21 +19,21 @@ def make_env(flatten_obs=True, from_pixels=False, frame_skip=1, max_episode_step
     return TimeLimit(env, max_episode_steps=max_episode_steps)
 
 
-for difficulty in ['easy', 'medium', 'hard', 'intensity']:
-    for domain_name, task_name in ALL_TASKS:
-        ID = f'{domain_name.capitalize()}-{task_name}-{difficulty}-v1'
-        register(id=ID,
-                 entry_point='distracting_control:make_env',
-                 kwargs=dict(domain_name=domain_name,
-                             task_name=task_name,
-                             difficulty=None if difficulty == 'intensity' else difficulty,
-                             intensity=None,
-                             distraction_types=('background', 'camera', 'color'),
-                             sample_from_edge=False,
-                             channels_first=True,
-                             width=84,
-                             height=84,
-                             frame_skip=4),
-                 )
+def register_gym_envs():
+    for difficulty in ['easy', 'medium', 'hard', 'intensity']:
+        for domain_name, task_name in ALL_TASKS:
+            ID = f'{domain_name.capitalize()}-{task_name}-{difficulty}-v1'
+            register(id=ID,
+                     entry_point='distracting_control:make_env',
+                     kwargs=dict(domain_name=domain_name,
+                                 task_name=task_name,
+                                 difficulty=None if difficulty == 'intensity' else difficulty,
+                                 intensity=None,
+                                 distraction_types=('background', 'camera', 'color'),
+                                 sample_from_edge=False,
+                                 channels_first=True,
+                                 width=84,
+                                 height=84,
+                                 frame_skip=4),
+                     )
 
-GDC_IS_REGISTERED = True
